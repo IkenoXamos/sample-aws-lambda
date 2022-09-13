@@ -44,9 +44,16 @@ resource "aws_iam_role_policy" "iam_policy_for_lambda" {
 }
 POLICY
 }
+
+# Reference: https://github.com/hashicorp/terraform-provider-aws/issues/7385#issuecomment-756672006
+data "docker_registry_image" "image" {
+  name = "${var.ecr_repo_url}:latest"
+}
+
 resource "aws_lambda_function" "main" {
     function_name   = "${var.env_namespace}_lambda"
     image_uri       = "${var.ecr_repo_url}:latest"
     package_type    = "Image"
     role            = aws_iam_role.iam_for_lambda.arn
+    source_code_hash = split("sha256:", data.docker_registry_image.image.sha256_digest)[1]
 }
